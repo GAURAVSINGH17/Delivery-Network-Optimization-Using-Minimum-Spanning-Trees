@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Delivery Network Optimization – MST Visualizer</title>
+<style>
+:root{color-scheme:light;--bg:#eef2f4;--card:#fff;--ink:#14213d;--mute:#5c6b7a;--line:#d3dbe2;--edge:#9fb0bf;--ok:#12805c;--bad:#c93c3c;--cur:#d98a00;--node:#dfe8f0;--acc:#14213d;--accx:#fff}
+
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:20px 24px 4px}h1{margin:0;font:700 24px/1.2 Georgia,"Times New Roman",serif}header p{margin:4px 0 0;color:var(--mute)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:16px;padding:16px 24px}
+@media(max-width:920px){main{grid-template-columns:1fr;padding:12px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+h2{margin:0 0 10px;font:600 16px/1.3 system-ui,sans-serif}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.row>*{flex:1 1 auto;min-width:0}
+input,select,button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 9px}
+button{cursor:pointer;flex:0 0 auto}button.p{background:var(--acc);color:var(--accx);border-color:var(--acc)}
+button:hover{filter:brightness(.93)}:focus-visible{outline:2px solid var(--cur);outline-offset:1px}
+#msg{min-height:20px;font-size:13px;color:var(--mute)}#msg.err{color:var(--bad)}
+svg{width:100%;height:auto;display:block;background:var(--card);border-radius:8px;touch-action:none}
+.e{stroke:var(--edge);stroke-width:2.5}.e.take{stroke:var(--ok);stroke-width:5}.e.skip{stroke:var(--bad);stroke-width:2.5;stroke-dasharray:7 6}.e.cur{stroke-width:8}
+.w{font:600 13px system-ui;fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:5px;text-anchor:middle;dominant-baseline:middle}
+.nd{fill:var(--node);stroke:var(--ink);stroke-width:2;cursor:grab}.nd.vis{fill:var(--ok);stroke:var(--ok)}.nd.st{stroke:var(--cur);stroke-width:5}
+.nm{font:600 12.5px system-ui;fill:var(--ink);text-anchor:middle;paint-order:stroke;stroke:var(--card);stroke-width:4px;pointer-events:none}
+.leg{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--mute);margin:8px 2px}
+.leg i{display:inline-block;width:22px;height:0;border-top:4px solid var(--edge);vertical-align:middle;margin-right:5px}
+#status{font-weight:600;min-height:44px;padding:8px 2px 0}
+ol{margin:0;padding:0;list-style:none;max-height:300px;overflow:auto;font-size:13.5px}
+ol li{padding:6px 8px;border-left:4px solid var(--line);margin-bottom:4px;background:var(--bg);border-radius:0 6px 6px 0}
+ol li.take{border-color:var(--ok)}ol li.skip{border-color:var(--bad)}ol li.now{outline:2px solid var(--cur)}
+#result{margin-top:10px;font-size:14px}table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{background:var(--bg)}
+.good{color:var(--ok);font-weight:600}.bad{color:var(--bad);font-weight:600}.note{font-size:13px;color:var(--mute);margin:8px 0 0}
+
+:root{--bg:#e9f0ef;--card:#fff;--ink:#0f2b3d;--mute:#5a7081;--line:#d5e0e3;--edge:#a8bcc6;--ok:#0f9d6e;--okbg:#e2f6ee;--bad:#d63d3d;--cur:#f59e0b;--node:#e3edf2;--acc:#e8590c;--accx:#fff;--sh:0 1px 2px rgba(15,43,61,.07),0 10px 28px rgba(15,43,61,.07)}
+
+.hero{background:linear-gradient(120deg,#0f2b3d,#155e75);color:#fff;border-radius:16px;padding:22px 26px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+h1{font:800 27px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;color:#fff}.hero p{color:#cfe6f0;margin:6px 0 0;max-width:46ch}
+.how{display:flex;gap:10px;flex-wrap:wrap;max-height:none;overflow:visible;counter-reset:s}
+.how li{counter-increment:s;background:rgba(255,255,255,.13);border:0;border-radius:999px;padding:7px 14px 7px 8px;margin:0;color:#fff;font-size:13.5px}
+.how li::before{content:counter(s);display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#ff8a3d;color:#0f2b3d;font-weight:700;margin-right:8px}
+.card{border-radius:14px;box-shadow:var(--sh);border:0}
+h2{display:flex;align-items:center;gap:9px;font-size:16.5px}
+.num{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--ink);color:var(--card);font-size:13px;font-weight:700}
+button{border-radius:8px;font-weight:600}button.p{background:var(--acc);border-color:var(--acc);color:var(--accx)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:8px}
+.stats div{background:var(--bg);border-radius:10px;padding:8px 12px}.stats span{display:block;font-size:12.5px;color:var(--mute)}.stats b{font-size:22px}
+.bar{height:8px;background:var(--bg);border-radius:8px;overflow:hidden;margin-bottom:10px}.bar i{display:block;height:100%;width:0;background:var(--ok);border-radius:8px;transition:width .4s}
+svg{background:radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 1.5px) 0 0/26px 26px,var(--card);border:1px solid var(--line)}
+.e.take{filter:drop-shadow(0 0 3px var(--ok))}.e.cur{animation:pop .5s ease-out}@keyframes pop{from{stroke-width:15;opacity:.4}}
+.w{stroke:none}.wb{fill:var(--card);stroke:var(--edge);stroke-width:1.5}.wb.take{fill:var(--okbg);stroke:var(--ok)}.wb.skip{stroke:var(--bad)}
+.nd{filter:drop-shadow(0 2px 3px rgba(15,43,61,.25))}
+.in{font:700 13px system-ui;fill:var(--ink);text-anchor:middle;dominant-baseline:middle;pointer-events:none}.nd.vis+.in,.nd[style]+.in{fill:#fff}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--ok);vertical-align:middle;margin-right:5px}.dot.off{background:var(--node);border:2px solid var(--ink)}
+#status{background:var(--bg);border-radius:10px;padding:12px 14px;border-left:5px solid var(--cur);margin-top:6px;min-height:52px}
+.sorted{margin-top:8px}.sh{font-size:13px;color:var(--mute);margin:4px 0}
+.chip{display:inline-block;margin:3px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);font-size:12.5px;background:var(--bg)}
+.chip.take{background:var(--ok);color:#fff;border-color:var(--ok)}.chip.skip{color:var(--bad);border-color:var(--bad);text-decoration:line-through}.chip.next{border-color:var(--cur);box-shadow:0 0 0 2px var(--cur)}
+.explain{background:var(--bg);border-radius:10px;padding:10px 14px;font-size:13.5px;margin-top:4px}.explain ul{margin:4px 0 0;padding-left:20px}
+#log li{border-radius:8px;border-left-width:5px}#log li.take::before{content:"\2713 Accepted. ";font-weight:700;color:var(--ok)}#log li.skip::before{content:"\2715 Rejected. ";font-weight:700;color:var(--bad)}
+#result:not(:empty){background:var(--okbg);border-radius:10px;padding:10px 12px}
+
+:root{--bg:#f3f8fb;--line:#dce7ee;--node:#eaf3f9;--edge:#b9cbd6;--mute:#5f7585;--sh:0 1px 2px rgba(15,43,61,.05),0 8px 22px rgba(15,43,61,.06)}
+.hero{background:linear-gradient(120deg,#d9eefb,#e3f6ec);color:var(--ink)}
+h1{color:var(--ink)}.hero p{color:var(--mute)}
+.how li{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(15,43,61,.1)}.how li::before{background:var(--acc);color:#fff}
+</style></head><body>
+<header><div class="hero"><div><h1>Delivery Network Optimization</h1><p>Connect every delivery location with the cheapest set of routes, and watch Prim’s and Kruskal’s algorithms do it step by step.</p></div><ol class="how"><li>Build a network</li><li>Pick an algorithm</li><li>Press Step and read</li></ol></div></header>
+<main>
+<div>
+ <section class="card"><div class="stats"><div><span>Algorithm</span><b id="stAlgo">Prim’s</b></div><div><span>Routes chosen</span><b id="stEdges">0 / 0</b></div><div><span>Total cost so far</span><b id="stCost">0</b></div></div><div class="bar"><i id="bar"></i></div><svg id="svg" viewBox="0 0 700 520" role="img" aria-label="Delivery network graph"></svg>
+  <div class="leg"><span><i></i>Unused route</span><span><i style="border-color:var(--ok)"></i>Selected for MST</span><span><i style="border-color:var(--bad);border-top-style:dashed"></i>Rejected (cycle)</span><span><b class="dot"></b>In the tree (Prim’s) / same colour = same group (Kruskal’s)</span><span><b class="dot off"></b>Not yet connected</span><span>Drag a location to move it</span></div>
+  <div id="status" aria-live="polite">Load a network, pick an algorithm, then press Step.</div><div id="sorted" class="sorted"></div></section>
+ <section class="card"><h2><span class="num">4</span>Compare Prim’s and Kruskal’s</h2>
+  <div class="row"><button class="p" id="bCmp">Compare now</button><button id="bBench">Test different network sizes</button></div><div id="cmp"></div></section>
+</div>
+<aside>
+ <section class="card"><h2><span class="num">1</span>Build the network</h2>
+  <div class="row"><input id="locName" placeholder="New location name" aria-label="Location name" style="flex:2 1 150px"><button id="bLoc">Add location</button></div>
+  <div class="row"><select id="rFrom" aria-label="From"></select><select id="rTo" aria-label="To"></select><input id="rW" type="number" min="0" placeholder="Cost" style="flex:0 1 70px" aria-label="Route cost"><button id="bRoute">Add route</button></div>
+  <div class="row"><select id="sSel" aria-label="Sample" style="flex:2 1 150px"><option value="1">Sample: 5 locations</option><option value="2">Sample: 7-location city</option></select><button id="bSample">Load sample</button></div>
+  <div class="row"><label for="rN" style="flex:0 0 auto;color:var(--mute);align-self:center">Random network of</label><input id="rN" type="number" min="3" max="12" value="8" style="max-width:64px"><span style="flex:0 0 auto;align-self:center;color:var(--mute)">locations</span><button id="bRand">Generate</button><button id="bClear">Clear all</button></div>
+  <div id="msg"></div></section>
+ <section class="card"><h2><span class="num">2</span>Run an algorithm</h2>
+  <div class="row"><select id="algo" aria-label="Algorithm"><option value="prim">Prim’s algorithm</option><option value="kruskal">Kruskal’s algorithm</option></select><select id="start" aria-label="Prim start location"></select></div>
+  <div class="row"><button id="bBack">Back</button><button class="p" id="bStep">Step</button><button id="bPlay">Play</button><button id="bAll">Run all</button><button id="bReset">Reset</button></div>
+  <div class="row"><label for="spd" style="flex:0 0 auto;color:var(--mute)">Speed</label><select id="spd"><option value="1400">Slow</option><option value="800" selected>Medium</option><option value="300">Fast</option></select></div><div id="explain" class="explain"></div></section>
+ <section class="card"><h2><span class="num">3</span>Read each step</h2><ol id="log"></ol><div id="result"></div></section>
+</aside></main>
+<script>
+const $=id=>document.getElementById(id),G={nodes:[],edges:[]};let sim=null,timer=null,drag=null;
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const key=(a,b)=>a<b?a+'\u0001'+b:b+'\u0001'+a, sc=(a,b)=>a<b?-1:a>b?1:0;
+const cmpP=(p,q)=>p[0]-q[0]||sc(p[1],q[1])||sc(p[2],q[2]);
+/* ---------- graph (same rules as graph.py of the Python project) ---------- */
+function addNode(g,name){name=String(name).trim();if(!name)throw Error('Location name cannot be empty.');
+ if(g.nodes.some(n=>n.name===name))throw Error("Location '"+name+"' already exists.");g.nodes.push({name,x:350,y:260});}
+function addEdge(g,a,b,wt){const has=n=>g.nodes.some(x=>x.name===n);
+ if(!has(a)||!has(b))throw Error('Both locations must exist before adding a route.');
+ if(a===b)throw Error('A route cannot connect a location to itself.');
+ const w=Number(wt);if(wt===''||wt===null||isNaN(w))throw Error('Route cost must be a number.');
+ if(w<0)throw Error('Route cost cannot be negative.');
+ if(g.edges.some(e=>key(e.a,e.b)===key(a,b)))throw Error('This route already exists.');g.edges.push({a,b,w});}
+function adj(g){const m={};g.nodes.forEach(n=>m[n.name]=[]);g.edges.forEach(e=>{m[e.a].push([e.b,e.w]);m[e.b].push([e.a,e.w]);});return m}
+class Heap{constructor(c){this.a=[];this.c=c}get size(){return this.a.length}
+ push(x){const a=this.a;a.push(x);let i=a.length-1;while(i>0){const p=(i-1)>>1;if(this.c(a[i],a[p])>=0)break;[a[i],a[p]]=[a[p],a[i]];i=p}}
+ pop(){const a=this.a,top=a[0],last=a.pop();if(a.length){a[0]=last;let i=0;for(;;){const l=2*i+1,r=l+1;let m=i;
+  if(l<a.length&&this.c(a[l],a[m])<0)m=l;if(r<a.length&&this.c(a[r],a[m])<0)m=r;if(m===i)break;[a[i],a[m]]=[a[m],a[i]];i=m}}return top}}
+/* ---------- Prim (heap) – rec=true also records visual steps ---------- */
+function prim(g,start,rec){if(!g.nodes.length)return null;const A=adj(g);start=start||g.nodes[0].name;
+ const vis=new Set([start]),h=new Heap(cmpP),mst=[],steps=[];let tot=0;
+ A[start].forEach(([v,w])=>h.push([w,start,v]));
+ while(h.size&&vis.size<g.nodes.length){const [w,u,v]=h.pop();
+  if(vis.has(v)){if(rec)steps.push({e:[u,v],act:'skip',vis:[...vis],tot,msg:'Cheapest candidate is '+E(u)+' – '+E(v)+' (cost '+w+'). '+E(v)+' is already in the tree, so this route would form a cycle. Skip it.'});continue}
+  vis.add(v);mst.push([u,v,w]);tot+=w;A[v].forEach(([x,wx])=>{if(!vis.has(x))h.push([wx,v,x])});
+  if(rec)steps.push({e:[u,v],act:'take',vis:[...vis],tot,msg:'Cheapest route leaving the tree: '+E(u)+' – '+E(v)+' (cost '+w+'). '+E(v)+' is new, so add it. Total cost so far = '+tot+'.'});}
+ return{ok:vis.size===g.nodes.length,mst,tot,steps,start,pre:'Start at '+E(start)+'. Its routes go into a min-heap; each step takes the cheapest route that reaches a new location.'}}
+/* ---------- Kruskal (sort + Union-Find) ---------- */
+function kruskal(g,rec){const n=g.nodes.length;if(!n)return null;
+ const sorted=g.edges.map(e=>[e.a,e.b,e.w]).sort((p,q)=>p[2]-q[2]);
+ const par={},rank={};g.nodes.forEach(x=>{par[x.name]=x.name;rank[x.name]=0});
+ const find=x=>{let r=x;while(par[r]!==r)r=par[r];while(par[x]!==r){const nx=par[x];par[x]=r;x=nx}return r};
+ const union=(a,b)=>{const ra=find(a),rb=find(b);if(ra===rb)return false;
+  if(rank[ra]<rank[rb])par[ra]=rb;else if(rank[ra]>rank[rb])par[rb]=ra;else{par[rb]=ra;rank[ra]++}return true};
+ const mst=[],steps=[];let tot=0;
+ for(const [a,b,w] of sorted){const ok=union(a,b);
+  if(ok){mst.push([a,b,w]);tot+=w}
+  if(rec){const grp={};g.nodes.forEach(x=>grp[x.name]=find(x.name));
+   steps.push({e:[a,b],act:ok?'take':'skip',grp,tot,msg:ok?E(a)+' – '+E(b)+' (cost '+w+'): the two locations are in different groups, so accept the route and merge the groups. Total = '+tot+'.'
+    :E(a)+' – '+E(b)+' (cost '+w+'): both locations are already connected, so this route would form a cycle. Reject it.'})}
+  if(mst.length===n-1)break}
+ return{ok:mst.length===n-1,mst,tot,steps,sortedE:sorted,pre:'All routes sorted by cost: '+sorted.map(e=>E(e[0])+'–'+E(e[1])+' ('+e[2]+')').join(', ')+'. Union-Find checks for cycles.'}}
+/* ---------- samples / random ---------- */
+function place(g,pos){g.nodes.forEach((n,i)=>{n.x=pos[i][0];n.y=pos[i][1];n.moved=true})}
+function sample(k){const g={nodes:[],edges:[]};
+ if(k==='1'){const L=['A - Warehouse','B - Sector 1','C - Sector 2','D - Sector 3','E - Sector 4'];L.forEach(x=>addNode(g,x));
+  [[0,1,4],[0,2,3],[1,2,2],[1,3,5],[2,3,7],[2,4,6],[3,4,1]].forEach(r=>addEdge(g,L[r[0]],L[r[1]],r[2]));
+  place(g,[[110,260],[290,100],[290,420],[540,130],[570,390]])}
+ else{const L=['Warehouse','Mall','School','Hospital','Station','Market','Park'];L.forEach(x=>addNode(g,x));
+  [[0,1,4],[0,2,8],[0,4,6],[1,2,2],[1,3,7],[2,3,5],[2,5,9],[3,5,3],[4,5,10],[4,6,5],[5,6,6]].forEach(r=>addEdge(g,L[r[0]],L[r[1]],r[2]));
+  place(g,[[100,250],[250,100],[430,130],[600,210],[180,400],[580,400],[380,450]])}return g}
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function randomGraph(n,extra,seed){const r=rng(seed),g={nodes:[],edges:[]},ri=(a,b)=>a+Math.floor(r()*(b-a+1));
+ for(let i=1;i<=n;i++)addNode(g,'L'+i);const seen=new Set();
+ const put=(a,b)=>{const k=key(a,b);if(seen.has(k))return false;seen.add(k);g.edges.push({a,b,w:ri(1,100)});return true};
+ for(let i=2;i<=n;i++)put('L'+i,'L'+ri(1,i-1));
+ const target=Math.min(n-1+extra,n*(n-1)/2);let t=0;while(g.edges.length<target&&t++<target*20){const a=ri(1,n),b=ri(1,n);if(a!==b)put('L'+a,'L'+b)}return g}
+function circle(g){const m=g.nodes.filter(n=>!n.moved);m.forEach((n,i)=>{const a=2*Math.PI*i/m.length-Math.PI/2;n.x=350+250*Math.cos(a);n.y=260+190*Math.sin(a)})}
+/* ---------- drawing ---------- */
+function render(){const st={},cur=sim&&sim.i>0?sim.steps[sim.i-1]:null;let vis=new Set(),hue={};
+ if(sim){for(let k=0;k<sim.i;k++)st[key(...sim.steps[k].e)]=sim.steps[k].act;
+  if(sim.algo==='prim')vis=new Set(cur?cur.vis:[sim.start]);
+  else if(cur){const c={};Object.values(cur.grp).forEach(r=>c[r]=(c[r]||0)+1);let h=0;for(const r in c)if(c[r]>1)hue[r]=(h++*67+150)%360}}
+ const P=n=>G.nodes.find(x=>x.name===n);let s='';
+ G.edges.forEach(e=>{const a=P(e.a),b=P(e.b),k=key(e.a,e.b);
+  s+='<line class="e '+(st[k]||'')+(cur&&key(...cur.e)===k?' cur':'')+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'"/>'});
+ G.edges.forEach(e=>{const a=P(e.a),b=P(e.b),x=(a.x+b.x)/2,y=(a.y+b.y)/2,w=String(e.w).length*8+14;
+  s+='<rect class="wb '+(st[key(e.a,e.b)]||'')+'" x="'+(x-w/2)+'" y="'+(y-11)+'" width="'+w+'" height="22" rx="11"/><text class="w" x="'+x+'" y="'+y+'">'+e.w+'</text>'});
+ G.nodes.forEach(n=>{const g=sim&&sim.algo==='kruskal'&&cur?cur.grp[n.name]:null,hs=g!==null&&hue[g]!==undefined;
+  s+='<g data-n="'+E(n.name)+'"><circle class="nd'+(vis.has(n.name)?' vis':'')+(sim&&sim.algo==='prim'&&n.name===sim.start?' st':'')+'" cx="'+n.x+'" cy="'+n.y+'" r="20"'+(hs?' style="fill:hsl('+hue[g]+',55%,42%);stroke:hsl('+hue[g]+',55%,42%)"':'')+'/><text class="in" x="'+n.x+'" y="'+(n.y+1)+'">'+E(sh(n.name).slice(0,3))+'</text><text class="nm" x="'+n.x+'" y="'+(n.y+38)+'">'+E(n.name)+'</text></g>'});
+ $('svg').innerHTML=s;
+ if(!G.nodes.length)$('svg').innerHTML='<text x="350" y="260" class="nm" style="font-size:16px">No locations yet. Add one or load a sample network.</text>';
+ let l='';if(sim){l='<li>'+sim.pre+'</li>';for(let k=0;k<sim.i;k++)l+='<li class="'+sim.steps[k].act+(k===sim.i-1?' now':'')+'">'+sim.steps[k].msg+'</li>'}
+ $('log').innerHTML=l;$('log').scrollTop=1e6;
+ const done=sim&&sim.i>=sim.steps.length;let r='',stt=cur?cur.msg:(sim?sim.pre:'Load a network, pick an algorithm, then press Step.');
+ if(done){if(sim.ok){r='<b class="good">MST found.</b> '+sim.mst.length+' edges (locations − 1 = '+(G.nodes.length-1)+')<br>'+sim.mst.map(m=>E(m[0])+' – '+E(m[1])+' : '+m[2]).join('<br>')+'<br><b>Total MST cost = '+sim.tot+'</b>';stt='Finished. Total MST cost = '+sim.tot}
+  else{r='<b class="bad">MST not possible:</b> the network is not connected.';stt='MST not possible: the network is not connected.'}}
+ $('result').innerHTML=r;$('status').textContent=stt;extra(cur)}
+const sh=n=>n.includes(' - ')?n.split(' - ')[0]:n;
+const EX={p:'<b>How Prim’s works</b><ul><li>Start at one location.</li><li>Look at every route that leaves the connected area.</li><li>Take the cheapest one that reaches a new location.</li><li>Repeat until every location is connected.</li></ul>',
+ k:'<b>How Kruskal’s works</b><ul><li>Sort all routes from cheapest to most expensive.</li><li>Take the next cheapest route.</li><li>Accept it only if it joins two separate groups; otherwise it makes a cycle.</li><li>Stop when you have (locations − 1) routes.</li></ul>'};
+function extra(cur){const V=G.nodes.length,a=$('algo').value,c=sim?sim.steps.slice(0,sim.i).filter(x=>x.act==='take').length:0;
+ $('stAlgo').textContent=a==='prim'?'Prim’s':'Kruskal’s';$('stEdges').textContent=c+' / '+Math.max(V-1,0);$('stCost').textContent=cur?cur.tot:0;
+ $('bar').style.width=(V>1?c/(V-1)*100:0)+'%';$('explain').innerHTML=EX[a==='prim'?'p':'k'];
+ let h='';if(sim&&sim.algo==='kruskal'){h='<div class="sh">Routes sorted by cost, cheapest first</div>';
+  sim.sortedE.forEach((e,k)=>{const t=k<sim.i?sim.steps[k].act:(k===sim.i&&sim.i<sim.steps.length?'next':'');h+='<span class="chip '+t+'">'+E(sh(e[0]))+'–'+E(sh(e[1]))+' · '+e[2]+'</span>'})}
+ $('sorted').innerHTML=h}
+function refresh(){['rFrom','rTo','start'].forEach(id=>{const v=$(id).value;$(id).innerHTML=G.nodes.map(n=>'<option>'+E(n.name)+'</option>').join('');if(G.nodes.some(n=>n.name===v))$(id).value=v});
+ if(G.nodes.length>1&&$('rTo').selectedIndex===$('rFrom').selectedIndex)$('rTo').selectedIndex=1;
+ $('start').style.display=$('algo').value==='prim'?'':'none'}
+function stop(){clearInterval(timer);timer=null;$('bPlay').textContent='Play'}
+function changed(){stop();sim=null;$('cmp').innerHTML='';refresh();render()}
+function msg(t,bad){$('msg').textContent=t;$('msg').className=bad?'err':''}
+function act(f){try{f();msg('')}catch(e){msg(e.message,true)}}
+/* ---------- controls ---------- */
+function begin(){if(!G.nodes.length){msg('Add locations first.',true);return false}
+ const a=$('algo').value,r=a==='prim'?prim(G,$('start').value,true):kruskal(G,true);r.algo=a;r.i=0;sim=r;return true}
+function step(d){if(!sim&&!begin())return;sim.i=Math.max(0,Math.min(sim.steps.length,sim.i+d));if(sim.i>=sim.steps.length)stop();render()}
+$('bStep').onclick=()=>{stop();step(1)};$('bBack').onclick=()=>{stop();if(sim)step(-1)};
+$('bAll').onclick=()=>{stop();if(!sim&&!begin())return;sim.i=sim.steps.length;render()};
+$('bReset').onclick=()=>{stop();sim=null;render()};
+$('bPlay').onclick=()=>{if(timer)return stop();if(!sim&&!begin())return;if(sim.i>=sim.steps.length)sim.i=0;$('bPlay').textContent='Pause';
+ timer=setInterval(()=>step(1),+$('spd').value);step(1)};
+$('algo').onchange=changed;$('start').onchange=()=>{stop();sim=null;render()};
+$('bLoc').onclick=()=>act(()=>{addNode(G,$('locName').value);$('locName').value='';circle(G);changed()});
+$('locName').onkeydown=e=>{if(e.key==='Enter')$('bLoc').click()};
+$('bRoute').onclick=()=>act(()=>{addEdge(G,$('rFrom').value,$('rTo').value,$('rW').value);$('rW').value='';changed()});
+$('bSample').onclick=()=>act(()=>{const g=sample($('sSel').value);G.nodes=g.nodes;G.edges=g.edges;changed()});
+$('bRand').onclick=()=>act(()=>{const n=Math.max(3,Math.min(12,+$('rN').value||8)),g=randomGraph(n,n,Date.now()%100000);G.nodes=g.nodes;G.edges=g.edges;circle(G);changed()});
+$('bClear').onclick=()=>{G.nodes=[];G.edges=[];msg('');changed()};
+/* drag a location */
+const svg=$('svg');
+svg.onpointerdown=e=>{const t=e.target.closest('[data-n]');if(t){drag=G.nodes.find(n=>n.name===t.dataset.n);svg.setPointerCapture(e.pointerId)}};
+svg.onpointermove=e=>{if(!drag)return;const p=svg.createSVGPoint();p.x=e.clientX;p.y=e.clientY;const q=p.matrixTransform(svg.getScreenCTM().inverse());
+ drag.x=Math.max(20,Math.min(680,q.x));drag.y=Math.max(20,Math.min(480,q.y));drag.moved=true;render()};
+svg.onpointerup=()=>{drag=null};
+/* ---------- comparison ---------- */
+function avg(f,n){const t=performance.now();for(let i=0;i<n;i++)f();return(performance.now()-t)/n}
+$('bCmp').onclick=()=>{const s=$('start').value||(G.nodes[0]&&G.nodes[0].name),A=prim(G,s),B=kruskal(G);
+ if(!A||!B){$('cmp').innerHTML='<p class="bad">The network is empty. Add locations or load a sample.</p>';return}
+ if(!A.ok||!B.ok){$('cmp').innerHTML='<p class="bad">MST not possible: the network is not connected, so no comparison can be made.</p>';return}
+ const tp=avg(()=>prim(G,s),1000),tk=avg(()=>kruskal(G),1000),ks=m=>m.map(x=>key(x[0],x[1])).sort().join('|'),same=ks(A.mst)===ks(B.mst);
+ const L=m=>m.mst.map(x=>E(x[0])+' – '+E(x[1])+' : '+x[2]).join('<br>');
+ $('cmp').innerHTML='<table><tr><th></th><th>Prim’s (start: '+E(s)+')</th><th>Kruskal’s</th></tr><tr><td>Selected edges</td><td>'+L(A)+'</td><td>'+L(B)+'</td></tr>'
+ +'<tr><td>Total MST cost</td><td><b>'+A.tot+'</b></td><td><b>'+B.tot+'</b></td></tr>'
+ +'<tr><td>Average time (1000 runs)</td><td>'+tp.toFixed(4)+' ms</td><td>'+tk.toFixed(4)+' ms</td></tr>'
+ +'<tr><td>Time complexity</td><td>O(E log V)</td><td>O(E log E)</td></tr><tr><td>Space complexity</td><td>O(V + E)</td><td>O(V + E)</td></tr></table>'
+ +'<p>Same total cost? '+(A.tot===B.tot?'<span class="good">Yes</span>':'<span class="bad">No (bug)</span>')+' &nbsp; Same edges? '+(same?'Yes':'No – fine when several MSTs share the minimum cost')+'</p>'
+ +'<p class="note">Times are measured in your browser (performance.now) and are tiny and noisy on small graphs. Differences between runs are normal.</p>'};
+$('bBench').onclick=()=>{let rows='';for(const [n,x] of [[10,10],[50,150],[100,500],[200,1500],[400,4000]]){const g=randomGraph(n,x,7),p=prim(g),k=kruskal(g);
+ rows+='<tr><td>'+g.nodes.length+'</td><td>'+g.edges.length+'</td><td>'+avg(()=>prim(g),20).toFixed(3)+'</td><td>'+avg(()=>kruskal(g),20).toFixed(3)+'</td><td>'+(p.tot===k.tot?'<span class="good">Yes</span>':'<span class="bad">No</span>')+'</td></tr>'}
+ $('cmp').innerHTML='<table><tr><th>Locations (V)</th><th>Routes (E)</th><th>Prim’s (ms)</th><th>Kruskal’s (ms)</th><th>Same cost?</th></tr>'+rows+'</table><p class="note">Random connected networks, average of 20 runs each. Results depend on your device and browser.</p>'};
+(function(){const g=sample('1');G.nodes=g.nodes;G.edges=g.edges;refresh();render()})();
+</script></body></html>
